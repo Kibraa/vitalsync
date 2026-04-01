@@ -1,0 +1,14 @@
+# Service ClusterIP pour exposer le back-end en interne au cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: vitalsync
+spec:
+  type: ClusterIP
+  selector:
+    app: backend
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
