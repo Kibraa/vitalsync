@@ -1,0 +1,56 @@
+version: "3.8"
+
+services:
+  # Back-end Node.js/Express
+  backend:
+    build: ./backend
+    ports:
+      - "3000:3000"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
+    depends_on:
+      - database
+    networks:
+      - vitalsync-network
+    restart: unless-stopped
+
+  # Front-end servi par Nginx
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - vitalsync-network
+    restart: unless-stopped
+
+  # Base de donnees PostgreSQL
+  database:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - vitalsync-network
+    restart: unless-stopped
+
+# Reseau bridge personnalise pour isoler les conteneurs
+# Avantage par rapport au reseau par defaut : les conteneurs communiquent
+# par nom de service (DNS interne) et sont isoles du reste de l'hote
+networks:
+  vitalsync-network:
+    driver: bridge
+
+# Volume persistant pour PostgreSQL
+# Sans ce volume, les donnees seraient perdues a chaque arret du conteneur
+volumes:
+  pgdata:
